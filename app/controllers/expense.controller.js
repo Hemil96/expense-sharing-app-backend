@@ -71,6 +71,7 @@ exports.findForUser = (req, res) => {
     });
 }
 
+// GET /expenses/:expressId - Retrive an expense with expense id
 exports.findOne = (req, res) => {
     Expense.find({_id: req.params.expenseId})
     .then(expense => {
@@ -78,6 +79,36 @@ exports.findOne = (req, res) => {
     }).catch(err => {
         res.status(500).send({
             message: err.message || "Some error occurred while retrieving expenses for" + req.param.username
+        });
+    });
+}
+
+exports.update = (req,res) => {
+    if(!req.body) {
+        return res.status(400).send({
+            message: "Expense content can not be empty"
+        });
+    }
+    body = req.body
+    query = req.params.expenseId
+    Expense.findOneAndUpdate(query, { $set : body },{new: true})
+    .then(expense => {
+        console.log(err);
+        
+        if(!expense) {
+            return res.status(404).send({
+                message: "Expense not found with expense id: " + req.params.expenseId
+            });
+        }
+        res.send(expense);
+    }).catch(err => {
+        if(err.kind === 'ObjectId') {
+            return res.status(404).send({
+                message: "Expense not found with expense id: " + req.params.expenseId
+            });                
+        }
+        return res.status(500).send({
+            message: "Error updating expense with id " + req.params.expenseId
         });
     });
 }

@@ -3,7 +3,7 @@ var bcrypt = require('bcryptjs');
 var jwt = require('jsonwebtoken');
 var config = require('../../config/database.config.js');
 
-// Create and Save a new User
+// Create and Save a new user
 exports.register = (req, res) => {
     // Validate request
     if(!req.body) { // I make it req.body from req.body.content
@@ -38,6 +38,7 @@ exports.register = (req, res) => {
     });
 };
 
+// Loging user
 exports.login = (req, res) => {
     User.findOne({ email: req.body.email }, function (err, user) {
         if (err) return res.status(500).send('Error on the server.');
@@ -51,6 +52,7 @@ exports.login = (req, res) => {
       });
 }
 
+// Logout user
 exports.logout = (req, res) => {
     res.status(200).send({ auth: false, token: null });
 }

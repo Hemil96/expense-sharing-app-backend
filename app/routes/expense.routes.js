@@ -14,4 +14,7 @@ module.exports = (app) => {
     // Get a expense with expenseId
     app.get('/expenses/:expenseId', verifyToken, expense.findOne);
 
+    // Update a expense with expressId
+    app.put('/expenses/:expenseId',verifyToken, expense.update)
+
 }
