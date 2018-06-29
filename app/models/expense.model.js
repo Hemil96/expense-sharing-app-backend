@@ -1,18 +1,26 @@
 const mongoose = require('mongoose');
 
-const ExpenseSchema = mongoose.Schema({
-    username: { type: String, unique: true },
-    totalPaidAmount: Number,
-    totalSpendAmount: { type: Number, default: 0 },
-    finalStatus: { type: Number, default: 0 },
-    expensesManagedByUser: [{
-        payee: String,
-        buddies: [{
-            name: String,
-            expense: Number
-        }],
-        totalBillAmount: { type: Number, default: 0 }
-    }]
+// SubSchemas
+const BuddySchema = mongoose.Schema({
+    name: { type: String, required: true },
+    expense: { type: Number, required: true }
+},{ _id : false })
+
+exports.newExpenseSchema = NewExpenseSchema = mongoose.Schema(
+    {
+        payee: { type: String, required: true },
+        buddies: [BuddySchema],
+        totalBillAmount: { type: String, required: true }
+    },{ _id : false }
+);
+
+
+// Main Schema
+ExpenseSchema = mongoose.Schema({
+    userId : { type: String, required: true },
+    expensesManagedByUser:{type: [NewExpenseSchema], required: true} 
 });
 
 module.exports = mongoose.model('Expense', ExpenseSchema);
+
+

@@ -1,12 +1,17 @@
 module.exports = (app) => {
     const expense = require('../controllers/expense.controller.js');
+    verifyToken = require('../controllers/verify-token.controller.js')
 
     // Create a new Expense
-    app.post('/expenses', expense.create);
+    app.post('/expenses', verifyToken, expense.create);
 
-    // Retrieve all Expenses 
-    // app.get('/expenses', expense.findAll);
+    // Get all expenses 
+    app.get('/expenses', verifyToken, expense.findAll);
 
-    // // Retrive Expenses managed by user
-    // app.get('/expenses/username', expense.findUserManagedExpresses); 
+    // Get all Expenses with particular userId
+    app.get('/expenses/user/:userId', verifyToken, expense.findForUser);
+
+    // Get a expense with expenseId
+    app.get('/expenses/:expenseId', verifyToken, expense.findOne);
+
 }

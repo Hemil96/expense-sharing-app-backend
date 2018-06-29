@@ -1,37 +1,59 @@
 const User = require('../models/user.model.js');
+var bcrypt = require('bcryptjs');
+var jwt = require('jsonwebtoken');
+var config = require('../../config/database.config.js');
 
 // Create and Save a new User
-exports.create = (req, res) => {
+exports.register = (req, res) => {
     // Validate request
     if(!req.body) { // I make it req.body from req.body.content
         return res.status(400).send({
             message: "User data can not be empty"
         });
     }
-
+    var hashedPassword = bcrypt.hashSync(req.body.password, 8); // Generate hash for the password
     // Create a User
     const user = new User({
         username: req.body.username,
-        password : req.body.password || "defaultpass",
+        password : hashedPassword,
         email: req.body.email || 'default@email.com',
         photolink: req.body.photoLink || 'defalt photo link',
-        expense : {
-            paid: req.body.paid || 0, 
-            totalSpendAmount: 0,
-            status: req.body.expense.status
-        }
+        phoneNumber: req.body.phoneNumber,
+        totalSpendAmount: 0,
+        totalPaidAmount: 0,
+        finalStatus: 0,
     });
 
     // Save User in the database
     user.save()
     .then(data => {
-        res.send(data);
+        var token = jwt.sign({ id: user._id }, config.secret, {
+            expiresIn: 86400 // expires in 24 hours
+          });
+          res.status(200).send({ auth: true, token: token, data });
     }).catch(err => {
         res.status(500).send({
             message: err.message || "Some error occurred while creating the User."
         });
     });
 };
+
+exports.login = (req, res) => {
+    User.findOne({ email: req.body.email }, function (err, user) {
+        if (err) return res.status(500).send('Error on the server.');
+        if (!user) return res.status(404).send('No user found.');
+        var passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
+        if (!passwordIsValid) return res.status(401).send({ auth: false, token: null });
+        var token = jwt.sign({ id: user._id }, config.secret, {
+          expiresIn: 86400 // expires in 24 hours
+        });
+        res.status(200).send({ auth: true, token: token });
+      });
+}
+
+exports.logout = (req, res) => {
+    res.status(200).send({ auth: false, token: null });
+}
 
 // Retrieve and return all users from the database.
 exports.findAll = (req, res) => {
@@ -77,7 +99,7 @@ exports.update = (req, res) => {
         });
     }
     // Find user and update it with the request body
-    query = {username: req.params.username};
+    query = req.userId
     User.findOneAndUpdate(query, { $set: body }, {new: true})
     .then(user => {
         if(!user) {
@@ -120,3 +142,19 @@ exports.delete = (req, res) => {
     });
 };
 
+
+exports.me = (req,res, next) => {
+    var token = req.headers['x-access-token'];
+    if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
+    
+    jwt.verify(token, config.secret, function(err, decoded) {
+        if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
+        
+        User.findById(decoded.id, function (err, user) {
+            if (err) return res.status(500).send("There was a problem finding the user.");
+            if (!user) return res.status(404).send("No user found.");
+            
+            res.status(200).send(user);
+          });
+    });
+}
