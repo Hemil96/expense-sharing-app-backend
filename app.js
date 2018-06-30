@@ -36,6 +36,6 @@ require('./app/routes/user.routes.js')(app);
 require('./app/routes/expense.routes.js')(app);
 
 // listen for requests
-app.listen(3000, () => {
+app.listen(4000, () => {
     console.log("Server is listening on port 3000");
 });

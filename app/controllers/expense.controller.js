@@ -1,5 +1,6 @@
 const Expense = require('../models/expense.model.js');
-const User = require('../models/user.model.js')
+const User = require('../models/user.model.js');
+const expenseUtility = require('../utility/expense.utility.js');
 
 // Create and Save a new Expense
 exports.create = (req, res) => {
@@ -16,35 +17,43 @@ exports.create = (req, res) => {
     });
     
     // Check the buddy is a app user or not!
-    // buddies.forEach(buddy => {
-    //     User.find({username : buddy}).then(docs => {
-    //         if (!docs.length){
-    //             return res.status(404).send({message: buddy + " not found"})
-    //         }
-    //     }).catch(err => {
-    //         console.log(err);
-    //         res.status(500).send({
-    //             message: err.message || "Some error occurred while checking users exsistanse =."
-    //         });
-    //     });
-    // });
-
-
-    // Create a expense
-    const expense = new Expense({
-        userId : req.userId,
-        expensesManagedByUser : [req.body.newExpense],
-            });
-
-    // Save expense in the database
-    expense.save()
-    .then(data => {
-        res.send(data);
-    }).catch(err => {
-        res.status(500).send({
-            message: err.message || "Some error occurred while creating the expense."
+    const promises = []
+    const usersNotFound = []
+    buddies.forEach((buddy) => {
+        promises.push(expenseUtility.checkUserExist(buddy));
+    })
+    Promise.all(promises)
+    .then((users)=>{
+        users.forEach(user => {
+            if(user){
+                usersNotFound.push(user)
+            }
         });
-    });
+        if(usersNotFound.length > 0){
+            return res.send({message: usersNotFound + " not found"})
+        }
+        else {
+            // Create a expense
+            console.log("else");
+            const expense = new Expense({
+                userId : req.userId,
+                expensesManagedByUser : [req.body.newExpense],
+                    });
+
+            // Save expense in the database
+            expense.save()
+            .then(data => {
+                
+                res.send(data);
+            }).catch(err => {
+                res.status(500).send({
+                    message: err.message || "Some error occurred while creating the expense."
+                });
+            });
+        }
+    }).catch((err) => {
+        res.send(err)
+    })
 };
 
 // Retrieve and return all Expenses from the database.
