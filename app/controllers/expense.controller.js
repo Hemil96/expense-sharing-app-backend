@@ -11,7 +11,7 @@ exports.create = (req, res) => {
         });
     }
     
-    var buddies = []
+    var buddies = [req.body.newExpense.payee] 
     req.body.newExpense.buddies.forEach(buddy => {
         buddies.push(buddy.name)
     });
@@ -29,6 +29,7 @@ exports.create = (req, res) => {
                 usersNotFound.push(user)
             }
         });
+
         if(usersNotFound.length > 0){
             return res.send({message: usersNotFound + " not found"})
         }
@@ -37,14 +38,15 @@ exports.create = (req, res) => {
             console.log("else");
             const expense = new Expense({
                 userId : req.userId,
-                expensesManagedByUser : [req.body.newExpense],
+                newExpense : req.body.newExpense,
                     });
 
             // Save expense in the database
             expense.save()
             .then(data => {
-                
-                res.send(data);
+                // Calculate and divide the expenses
+                expenseUtility.divideExpense(data);
+                res.status(200).send(data);
             }).catch(err => {
                 res.status(500).send({
                     message: err.message || "Some error occurred while creating the expense."
@@ -52,7 +54,7 @@ exports.create = (req, res) => {
             });
         }
     }).catch((err) => {
-        res.send(err)
+        res.status(500).send(err)
     })
 };
 
@@ -60,7 +62,7 @@ exports.create = (req, res) => {
 exports.findAll = (req, res) => {
     Expense.find()
     .then(expenses => {
-        res.send(expenses);
+        res.status(200).send(expenses);
     }).catch(err => {
         res.status(500).send({
             message: err.message || "Some error occurred while retrieving expenses."
@@ -82,7 +84,7 @@ exports.findForUser = (req, res) => {
 
 // GET /expenses/:expressId - Retrive an expense with expense id
 exports.findOne = (req, res) => {
-    Expense.find({_id: req.params.expenseId})
+    Expense.find({_id: req.userId})
     .then(expense => {
         res.send(expense);
     }).catch(err => {
@@ -98,26 +100,27 @@ exports.update = (req,res) => {
             message: "Expense content can not be empty"
         });
     }
-    body = req.body
-    query = req.params.expenseId
-    Expense.findOneAndUpdate(query, { $set : body },{new: true})
-    .then(expense => {
-        console.log(err);
-        
-        if(!expense) {
-            return res.status(404).send({
-                message: "Expense not found with expense id: " + req.params.expenseId
-            });
+
+    // Login user must be an author of the expense to edit 
+    // Expense.findOne({_id: req.params.expenseId}, (err, doc) => {
+    //     if (err) {
+    //         console.log(err + "<<<<<<<<<<<<<<<<<<<<<");
+    //         res.status(400).send(err);
+    //     } else {
+    //         if(!doc || doc.userId !== req.userId){
+    //             res.status(401).send({message :"You are not authorized to do this."})
+    //         }     
+    //     }
+    // })
+
+    query = req.params.userId
+    Expense.findOneAndUpdate(query, { $set: {newExpense: req.body.newExpense} },{new: true}, 
+    (err, doc) => {
+        if(err){
+            console.log(err);
+            res.status(500).send(err);
+        } else {
+            res.status(200).send(doc)
         }
-        res.send(expense);
-    }).catch(err => {
-        if(err.kind === 'ObjectId') {
-            return res.status(404).send({
-                message: "Expense not found with expense id: " + req.params.expenseId
-            });                
-        }
-        return res.status(500).send({
-            message: "Error updating expense with id " + req.params.expenseId
-        });
-    });
+    })
 }
