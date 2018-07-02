@@ -49,7 +49,7 @@ exports.divideExpense = (data) => {
 exports.updateHelperFunction = (expenseId, newExpenseBody) => {
     Expense.findById(expenseId).then( (err, oldExpenseBody) => {
         oldExpenseBody.buddies.forEach(buddy => {
-        
+            
         })
     }
     ).catch()  
