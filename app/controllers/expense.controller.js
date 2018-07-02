@@ -35,7 +35,6 @@ exports.create = (req, res) => {
         }
         else {
             // Create a expense
-            console.log("else");
             const expense = new Expense({
                 userId : req.userId,
                 newExpense : req.body.newExpense,

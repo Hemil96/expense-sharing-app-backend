@@ -1,8 +1,9 @@
 var jwt = require('jsonwebtoken');
 var config = require('../../config/database.config.js');
+const User = require('../models/user.model.js');
 
 
-function verifyToken(req, res, next) {
+exports.verifyToken =  function verifyToken(req, res, next) {
   var token = req.headers['x-access-token'];
   if (!token)
     return res.status(403).send({ auth: false, message: 'No token provided.' });
@@ -15,5 +16,16 @@ function verifyToken(req, res, next) {
   });
 }
 
-
-module.exports = verifyToken;
+exports.isAdmin = function isAdmin( req, res, next) {
+  User.findById(req.userId)
+  .then(doc => {
+      console.log(doc);
+      console.log(doc.username);
+      if(doc.username === "admin"){
+        next()
+      } 
+      else {
+        res.status(401).send({message:"You are not authorized to do this"});
+      }
+  }).catch(err => res.status(400).send(err))
+}

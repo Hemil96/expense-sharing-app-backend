@@ -1,6 +1,8 @@
 module.exports = (app) => {
     const expense = require('../controllers/expense.controller.js');
-    verifyToken = require('../controllers/verify-token.controller.js')
+    const middleware = require('../controllers/middleware.controller.js');
+    const verifyToken = middleware.verifyToken;
+    const isAdmin = middleware.isAdmin;
 
     // Create a new Expense
     app.post('/expenses', verifyToken, expense.create);

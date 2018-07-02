@@ -2,6 +2,8 @@ const User = require('../models/user.model.js');
 var bcrypt = require('bcryptjs');
 var jwt = require('jsonwebtoken');
 var config = require('../../config/database.config.js');
+var multer  = require('multer')
+var upload = multer({ dest: 'uploads/' })
 
 // Create and Save a new user
 exports.register = (req, res) => {
@@ -71,27 +73,30 @@ exports.findAll = (req, res) => {
 
 // Find a single user with a username
 exports.findOne = (req, res) => {
-    User.findOne(req.params.username)
+    User.findOne(req.params.userId)
     .then(user => {
         if(!user) {
             return res.status(404).send({
-                message: "User not found with id " + req.params.username
+                message: "User not found with id " + req.userId
             });            
+        }
+        if(req.params.userId !== req.userId){
+            res.status.send({message: "You are not authorized"})
         }
         res.send(user);
     }).catch(err => {
         if(err.kind === 'ObjectId') {
             return res.status(404).send({
-                message: "User not found with id " + req.params.username
+                message: "User not found with id " + req.userId
             });                
         }
         return res.status(500).send({
-            message: "Error retrieving user with id " + req.params.username
+            message: "Error retrieving user with id " + req.userId
         });
     });
 };
 
-// Update a user identified by the username in the request
+// Update a user identified by the userid in the request
 exports.update = (req, res) => {
     body = req.body;
     // Validate Request
@@ -100,15 +105,19 @@ exports.update = (req, res) => {
             message: "User content can not be empty"
         });
     }
+    
+    if(req.params.userId !== req.userId){
+        return res.status(401).send({message: "You are not authorized"});
+    }
     // Find user and update it with the request body
-    query = req.userId
-    User.findOneAndUpdate(query, { $set: body }, {new: true})
+    query = req.params.userId
+    User.findOneAndUpdate({_id: query}, { $set: body }, {new: true})
     .then(user => {
         if(!user) {
             return res.status(404).send({
                 message: "User not found with id " + req.params.username
             });
-        }
+        } 
         res.send(user);
     }).catch(err => {
         if(err.kind === 'ObjectId') {
@@ -124,22 +133,22 @@ exports.update = (req, res) => {
 
 // Delete a user with the specified username in the request
 exports.delete = (req, res) => {
-    User.findOneAndRemove(req.params.username)
+    User.findOneAndRemove(req.params.userId)
     .then(user => {
         if(!user) {
             return res.status(404).send({
-                message: "user not found with id " + req.params.username
+                message: "user not found with id " + req.params.userId
             });
         }
         res.send({message: "user deleted successfully!"});
     }).catch(err => {
         if(err.kind === 'ObjectId' || err.name === 'NotFound') {
             return res.status(404).send({
-                message: "user not found with id " + req.params.username
+                message: "user not found with id " + req.params.userId
             });                
         }
         return res.status(500).send({
-            message: "Could not delete user with id " + req.params.username
+            message: "Could not delete user with id " + req.params.userId
         });
     });
 };

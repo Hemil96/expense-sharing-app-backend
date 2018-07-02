@@ -64,10 +64,10 @@ exports.isAuthorOftheExpense = (expenseId, userId) => {
                 reject(err)
             } else {
                 if(!doc || doc.userId !== userId){
-                    reolve(false)
+                    resolve(false)
                 }
                 else{ resolve(true)}
-            }
+            }   
         })
     
     })
