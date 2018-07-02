@@ -1,6 +1,7 @@
 const User = require('../models/user.model.js')
+const Expense = require('../models/expense.model.js')
 
-exports.checkUserExist = (username,payee) => {
+exports.checkUserExist = (username) => {
     return new Promise((resole, reject)=>{
       User.find({username : username}).then(docs => {
         if (!docs.length){
@@ -45,20 +46,30 @@ exports.divideExpense = (data) => {
 }
 
 
-exports.updateHelperFunction = (oldExpense, newExpense) => {
-    console.log("a");
+exports.updateHelperFunction = (expenseId, newExpenseBody) => {
+    Expense.findById(expenseId).then( (err, oldExpenseBody) => {
+        oldExpenseBody.buddies.forEach(buddy => {
+        
+        })
+    }
+    ).catch()  
 }
 
 
-// newBuddies = []
-    // req.newExpense.buddies.forEach(buddyObj => {
-    //     newBuddies.push(buddyObj.name);
-    // });
-
-    // const promises = []
-    // const usersNotFound = []
-    // newBuddies.forEach((buddy) => {
-    //     promises.push(expenseUtility.checkUserExist(buddy));
-    // })
-    // Promise.all(promises)
+exports.isAuthorOftheExpense = (expenseId, userId) => {
+    return new Promise((resolve,reject) => {
+        Expense.findOne({_id: expenseId}, (err, doc) => {
+            if (err) {
+                console.log(err);
+                reject(err)
+            } else {
+                if(!doc || doc.userId !== userId){
+                    reolve(false)
+                }
+                else{ resolve(true)}
+            }
+        })
+    
+    })
+}
 

@@ -62,7 +62,9 @@ exports.create = (req, res) => {
 exports.findAll = (req, res) => {
     Expense.find()
     .then(expenses => {
-        res.status(200).send(expenses);
+        if (expenses.length > 0) {
+            res.status(200).send(expenses);    
+        } else { res.status(400).send({ message: "No Expense found"})}
     }).catch(err => {
         res.status(500).send({
             message: err.message || "Some error occurred while retrieving expenses."
@@ -77,19 +79,24 @@ exports.findForUser = (req, res) => {
         res.send(expenses);
     }).catch(err => {
         res.status(500).send({
-            message: err.message || "Some error occurred while retrieving expenses for" + req.param.username
+            message: err.message || "Some error occurred while retrieving expenses for" + req.param.userId
         });
     });
 }
 
 // GET /expenses/:expressId - Retrive an expense with expense id
 exports.findOne = (req, res) => {
-    Expense.find({_id: req.userId})
+    Expense.find({_id: req.params.expenseId})
     .then(expense => {
-        res.send(expense);
+        if (expense.length > 0) {
+            res.status(200).send(expense);    
+        } else {
+            res.status(400).send({message:"No Expense found with expenseId: " + req.params.expenseId})
+        }
+        
     }).catch(err => {
         res.status(500).send({
-            message: err.message || "Some error occurred while retrieving expenses for" + req.param.username
+            message: err.message || "Some error occurred while retrieving expenses for" + req.param.userId
         });
     });
 }
@@ -101,26 +108,53 @@ exports.update = (req,res) => {
         });
     }
 
-    // Login user must be an author of the expense to edit 
-    // Expense.findOne({_id: req.params.expenseId}, (err, doc) => {
-    //     if (err) {
-    //         console.log(err + "<<<<<<<<<<<<<<<<<<<<<");
-    //         res.status(400).send(err);
+    // isAuthorized to edit 
+    expenseUtility.isAuthorOftheExpense(req.params.expenseId, req.userId)
+    .then((isauthor) => {
+        if(!isauthor){
+            res.status(401).send({message:"You are not authorized to do this"})
+        } else {
+            expenseUtility.updateHelperFunction(expenseId, req.body.newExpense, )
+        }
+    }).catch(err => {
+        res.status(400).send(err)
+    })
+
+    var newBuddies = [req.newExpense.payee] 
+        req.newExpense.buddies.forEach(buddy => {
+            newBuddies.push(buddy.name)
+        });
+        
+        // Check the buddy is a app user or not!
+        const promises = []
+        const usersNotFound = []
+        newBuddies.forEach((buddy) => {
+            promises.push(expenseUtility.checkUserExist(buddy));
+        })
+        Promise.all(promises)
+        .then((users)=>{
+            users.forEach(user => {
+                if(user){
+                    usersNotFound.push(user)
+                }
+            });
+
+            if(usersNotFound.length > 0){
+                return res.send({message: usersNotFound + " not found"})
+            }
+            else {
+                expenseUtility.updateHelperFunction(expenseId, req.params.n)
+            }
+        })
+
+    // query = req.params.userId
+    // Expense.findOneAndUpdate(query, { $set: {newExpense: req.body.newExpense} },{new: true}, 
+    // (err, doc) => {
+    //     if(err){
+    //         console.log(err);
+    //         res.status(500).send(err);
     //     } else {
-    //         if(!doc || doc.userId !== req.userId){
-    //             res.status(401).send({message :"You are not authorized to do this."})
-    //         }     
+    //         res.status(200).send(doc)
     //     }
     // })
-
-    query = req.params.userId
-    Expense.findOneAndUpdate(query, { $set: {newExpense: req.body.newExpense} },{new: true}, 
-    (err, doc) => {
-        if(err){
-            console.log(err);
-            res.status(500).send(err);
-        } else {
-            res.status(200).send(doc)
-        }
-    })
 }
