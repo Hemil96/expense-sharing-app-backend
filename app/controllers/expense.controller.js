@@ -10,12 +10,17 @@ exports.create = (req, res) => {
             message: "Expense data can not be empty"
         });
     }
-    
+    checkTotal = parseInt(0)
     var buddies = [req.body.newExpense.payee] 
     req.body.newExpense.buddies.forEach(buddy => {
-        buddies.push(buddy.name)
+        buddies.push(buddy.name);
+        checkTotal = checkTotal + parseInt(buddy.expense);
     });
     
+    if(req.body.newExpense.totalBillAmount != checkTotal){
+        return res.status(400).send({message: "Total not matched"})
+    }
+
     // Check the buddy is a app user or not!
     const promises = []
     const usersNotFound = []
