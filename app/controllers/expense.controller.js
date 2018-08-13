@@ -150,15 +150,4 @@ exports.update = (req,res) => {
                 expenseUtility.updateHelperFunction(expenseId, req.params.n)
             }
         })
-
-    // query = req.params.userId
-    // Expense.findOneAndUpdate(query, { $set: {newExpense: req.body.newExpense} },{new: true}, 
-    // (err, doc) => {
-    //     if(err){
-    //         console.log(err);
-    //         res.status(500).send(err);
-    //     } else {
-    //         res.status(200).send(doc)
-    //     }
-    // })
 }
